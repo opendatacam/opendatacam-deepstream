@@ -1,264 +1,304 @@
-# OpenDataCam 2.1.0 – An open source tool to quantify the world
 
-OpenDataCam is an open source tool to quantify the world. It quantifies and tracks moving objects with live video analysis. It is designed to be an accessible, affordable and open-source solution to better understand interactions in urban environments. 
 
-OpenDataCam never records any photo or video data. The system only saves surveyed meta-data, in particular the path an object moved or number of counted objects at a certain point. The novelty of OpenDataCam is, that everything happens on location, while no visual data is saved or sent to online cloud processing.
+●	Install ffmpeg
 
-OpenDataCam runs on Linux and CUDA GPU enabled hardware. It is optimized for the NVIDIA Jetson Board series. The most affordable setup runs on a Jetson Nano (low cost, credit-card sized GPU-computer) combined with other other off-the-shelf equipment (webcam, power supply, housing), this entire setup is priced around $150. All software is based on open source components and runs completely locally. The software features a friendly user interface and is currently optimised for detecting and counting traffic participants, but is not limited to that. 
+    sudo apt-get install ffmpeg
 
-Both software and hardware setup are documented and offered as an open source project, to underline transparency and full disclosure on privacy questions. The simple OpenDataCam setup allows everybody to become an urban data miner.
+●	Patch ffserver
 
-OpenDataCam is very alpha and we do not provide any guarantee that this will work for your use case, but we conceived it as a starting point from where you can build-on & improve.
+    sudo cp -r <PATH_TO_OPENDATACAM>/deepstream_patch/ffserver.conf /etc/ffserver.conf
+    
+●	Download Deepstream from this [link](https://developer.nvidia.com/deepstream-download) and make sure to get debian file for jetson
 
-OpenDataCam is generously supported by [move lab](https://www.move-lab.com/) (ongoing). OpenDataCam was supported in part by a [residency](http://studioforcreativeinquiry.org/people/benedikt-gros) at the Frank-Ratchye [STUDIO for Creative Inquiry](http://studioforcreativeinquiry.org/) at Carnegie Mellon University.
+●	Install deepstream
 
-👉 [See Demo Video (4 min)](https://vimeo.com/346340651/38966dac9d)
+    sudo apt-get update
 
-[![Demo OpenDataCam](https://i.vimeocdn.com/video/805477718.webp?mw=1200&mh=675&q=85)](https://vimeo.com/346340651/38966dac9d)
+    sudo apt-get install --fix-broken
 
-## Table of content
+    sudo apt-get install \
+       	libssl1.0.0 \
+    	libgstreamer1.0-0 \
+    	gstreamer1.0-tools \
+    	gstreamer1.0-plugins-good \
+   	gstreamer1.0-plugins-bad \
+    	gstreamer1.0-plugins-ugly \
+    	gstreamer1.0-libav \
+    	libgstrtspserver-1.0-0 \
+    	libjansson4=2.11-1
 
-- [OpenDataCam 2.1.0](#opendatacam-210)
-  * [Table of content](#table-of-content)
-  * [💻 Hardware pre-requisite](#-hardware-pre-requisite)
-  * [🎬 Get Started, quick setup](#-get-started-quick-setup)
-    + [1. Software pre-requisite 📦](#1-software-pre-requisite-)
-      - [For jetson: Flash Jetson board to jetpack 4.2 or 4.2.1 ⚡️](#for-jetson-flash-jetson-board-to-jetpack-42-or-421-️)
-      - [For non-jetson: Install nvidia-docker v2.0 🔧](#or-non-jetson-install-nvidia-docker-v20-)
-    + [2. Install and start OpenDataCam 🚀](#2-install-and-start-opendatacam-)
-    + [2. bis (optional) Upgrade OpenDataCam (from v2.x to another v2.x version)](#2-bis-optional-upgrade-opendatacam-from-v2x-to-another-v2x-version)
-    + [3. Use OpenDataCam 🖖](#3-use-opendatacam-)
-    + [4. Configure your Wifi hotspot 📲](#4-configure-your-wifi-hotspot-)
-    + [5. Customize OpenDataCam ️️⚙️](#5-customize-opendatacam-️️️)
-    + [6. Docker playbook ️📚](#6-docker-playbook-️)
-  * [🔌 API Documentation](#-api-documentation)
-  * [🗃 Data export documentation](#-data-export-documentation)
-  * [⁉️ Troubleshooting](#-troubleshooting)
-  * [🎛 Advanced uses](#-advanced-uses)
-    + [How to use opendatacam without docker](#how-to-use-opendatacam-without-docker)
-    + [How to create / update the docker image](#how-to-create--update-the-docker-image)
-  * [🎯 How accurate is OpenDataCam ?](#-how-accurate-is-opendatacam-)
-  * [🚤 How fast is OpenDataCam ?](#-how-fast-is-opendatacam-)
-  * [🛠 Development notes](#-development-notes)
-  * [💌 Acknowledgments](#-acknowledgments)
+    sudo dpkg -i <deepstream debian file>
 
-## 💻 Hardware pre-requisite
+●	Patch DeepStream : add confidence value to Deepstream inference objects (for more details refer to [link](https://devtalk.nvidia.com/default/topic/1058661/deepstream-sdk/nvinfer-is-not-populating-confidence-field-in-nvdsobjectmeta-ds-4-0-/post/5373361/#5373361) )
 
-- Nvidia Jetson Nano / TX2 / Xavier or any GNU/Linux x86_64 machine with a CUDA compatible GPU with [nvidia-docker v2.0](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-2.0)#prerequisites) (in the cloud or locally)
-- Webcam Logitech C222, C270, C310, C920 / Rasberry Pi cam for Jetson nano / a Video file / IP camera
-- A smartphone / tablet / laptop that you will use to operate the system
+Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/includes/nvdsinfer_context.h
 
-_If you have a Jetson Nano, [please read this specific documentation](documentation/jetson/JETSON_NANO.md)_
+*Replace "NvDsInferObject" structure with the following :*
 
-_Also see [In depth guide about compatible Cameras with Jetson](https://elinux.org/Jetson/Cameras)_
+	typedef struct
+	{
+		/** Offset from the left boundary of the frame. */
+		unsigned int left;
+		/** Offset from the top boundary of the frame. */
+		unsigned int top;
+		/** Object width. */
+		unsigned int width;
+		/** Object height. */
+		unsigned int height;
+		/* Index for the object class. */
+		int classIndex;
+		/* String label for the detected object. */
+		char *label;
+		/* Object confidence */
+		float confidence;
+	} NvDsInferObject;
+
+Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/nvdsinfer_context_impl_output_parsing.cpp
 
-## 🎬 Get Started, quick setup
+*Replace "clusterAndFillDetectionOutputCV" method with the following:*
 
-### 1. Software pre-requisite 📦
+	void
+	NvDsInferContextImpl::clusterAndFillDetectionOutputCV(NvDsInferDetectionOutput &output)
+	{
+		output.objects = new NvDsInferObject[m_ObjectList.size()];
+		output.numObjects = 0;
 
-#### For jetson: Flash Jetson board to jetpack 4.2 or 4.2.1 ⚡️
+		for (unsigned int i = 0; i < m_ObjectList.size(); i++)
+		{
 
-*Ignore this if you are not running on a jetson*
+			NvDsInferObject &object = output.objects[i];
+			object.left = m_ObjectList[i].left;
+			object.top = m_ObjectList[i].top;
+			object.width = m_ObjectList[i].width;
+			object.height = m_ObjectList[i].height;
+			object.classIndex = m_ObjectList[i].classId;
+			object.confidence = m_ObjectList[i].detectionConfidence;
+			int c = object.classIndex;
+			object.label = nullptr;
+			if (c < m_Labels.size() && m_Labels[c].size() > 0)
+						object.label = strdup(m_Labels[c][0].c_str());
+			output.numObjects++;
+		}
+			
+	}
 
-[See How to find out your jetpack version](documentation/jetson/FLASH_JETSON.md#How-to-find-out-my-Jetpack-version)
+Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/ to generate the new libraries: 
+	
+	make && sudo CUDA_VER=10.0 make install
 
-If your jetson does not have jetpack 4.2 or 4.2.1 *(CUDA 10, TensorRT 5, cuDNN 7.3, Ubuntu 18.04)*
+Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/gst-plugins/gst-nvinfer/gstnvinfer_meta_utils.cpp
 
-[Follow this guide to flash your jetson](documentation/jetson/FLASH_JETSON.md)
+*Replace Line 83 ("obj_meta->confidence = 0.0;")  with :*
 
-#### For non-jetson: Install nvidia-docker v2.0 🔧
+	obj_meta->confidence = obj.confidence;
 
-*Ignore this if you are running on a jetson, nvidia-docker isn't necessary with jetpack 4.2*
+	
+Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/gst-plugins/gst-nvinfer/ to generate the new libraries : 
 
-Nvidia-docker v2.0 is only compatible with GNU/Linux x86_64 machine with a [CUDA compatible GPU](https://developer.nvidia.com/cuda-gpus)
+	make && sudo CUDA_VER=10.0 make install
 
-[Follow this guide to install nvidia-docker v2.0 on your machine](documentation/nvidia-docker/INSTALL_NVIDIADOCKER.md)
+●	Patch DeepStream : copy detection module 
 
-### 2. Install and start OpenDataCam 🚀
+	sudo cp -rv <PATH_TO_OPENDATACAM>/deepstream_patch/deepstream_app_config_yoloV3_tiny_http_rtsp.txt /opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/
+	cd /opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/
+	export CUDA_VER=10.0
+	make -C nvdsinfer_custom_impl_Yolo
 
-Open a terminal or ssh to you machine and run the following commands depending on your platform
+*Download '.cfg' and '.weights' files using 'prebuild.sh' (e.g: yolov3-tiny) :*
 
-- _For a Jetson:_ make sure an usb webcam is connected on `video0`
+	echo "Downloading yolov3-tiny config and weights files ... "
+	wget https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3-tiny.cfg -q --show-progress
+	wget https://pjreddie.com/media/files/yolov3-tiny.weights -q --show-progress
+    
+●	Patch DeepStream : modify main application 
 
-```bash
-ls /dev/video*
-# Output should be: /dev/video0
-```
+*Add the folowing lines to file : /opt/nvidia/deepstream/deepstream-4.0/sources/apps/sample_apps/deepstream-app/deepstream_app.h*
 
-_If this isn't the case, run the install script anyway, and after you will need to [modify the config.json](documentation/CONFIG.md) file to select your desired VIDEO_INPUT (file, usbcam, raspberrycam, remote IP cam), [we will improve setup / install process for v2.1](https://github.com/opendatacam/opendatacam/issues/89) 💪_
+	#include "detection_func.h"
+	#include "http_stream.h"
 
-- _For a nvidia-docker compatible machine:_ it will run on a demo file
+*Add the folowing lines to file : /opt/nvidia/deepstream/deepstream-4.0/sources/apps/sample_apps/deepstream-app/deepstream_app.c*
+	
+	#define JSON_PORT 8070
+	#define JSON_TIMEOUT 400000
 
-__Install commands:__
+*Replace in the same file "write_kitti_output" function with:*
 
-```bash
-# Download install script
-wget -N https://raw.githubusercontent.com/opendatacam/opendatacam/v2.1.0/docker/install-opendatacam.sh
+	static void
+	write_kitti_output (AppCtx * appCtx, NvDsBatchMeta * batch_meta)
+	{
+	  gchar bbox_file[1024] = { 0 };
+	  FILE *bbox_params_dump_file = NULL;
 
-# Give exec permission
-chmod 777 install-opendatacam.sh
+	  if (!appCtx->config.bbox_dir_path)
+		return;
 
-# NB: You will be asked for sudo password when installing the docker container
+	  for (NvDsMetaList * l_frame = batch_meta->frame_meta_list; l_frame != NULL;
+		  l_frame = l_frame->next) {
+		NvDsFrameMeta *frame_meta = l_frame->data;
+		send_json(frame_meta, JSON_PORT, JSON_TIMEOUT);
+	  }
+	}
+
+*Change line 538 of file = \opt\nvidia\deepstream\deepstream-4.0\sources\apps\apps-common\src\deepstream_sink_bin.c    from :*
+	
+	g_object_set (G_OBJECT (bin->sink), "host", "224.224.255.255", "port",
+		config->udp_port, "async", FALSE, "sync", 0, NULL);
+*to :*
+	
+	g_object_set (G_OBJECT (bin->sink), "host", "127.0.0.1", "port",
+		config->udp_port, "async", FALSE, "sync", 0, NULL);
+
+Run command:
+	
+	sudo cp -r <PATH_TO_OPENDATACAM>/deepstream_patch/src_cpp/ /opt/nvidia/deepstream/deepstream-4.0/sources/apps/sample_apps/deepstream-app/
+
+Replace lines after "all: $(APP)" (included) in "/opt/nvidia/deepstream/deepstream-4.0/sources/apps/sample_apps/deepstream-app/Makefile" with this :
+
+	CPPSRCDIR   = src_cpp
+
+	SOURCES+= $(wildcard $(CPPSRCDIR)/*.cpp)
+
+	INCLUDES+= $(wildcard $(CPPSRCDIR)/*.h)
+
+	OBJS+= $(SOURCES:$(CPPSRCDIR)/%.cpp=$(CPPSRCDIR)/%.o)
 
-# Install command for Jetson Nano
-./install-opendatacam.sh --platform nano
+	CFLAGS+= -I $(CPPSRCDIR)
+
+	CXX      = g++
+	CXXFLAGS +=  -Wall -ansi -g -std=c++11  -DPLATFORM_TEGRA
+	CXXFLAGS+= -I../../apps-common/includes -I../../../includes -I $(CPPSRCDIR) -DDS_VERSION_MINOR=0 -DDS_VERSION_MAJOR=4
+
+	CXXFLAGS+= `pkg-config --cflags $(PKGS)`
+
+
+	all: $(APP)
 
-# Install command for Jetson TX2
-./install-opendatacam.sh --platform tx2
+	%.o: %.c $(INCS) Makefile
+		$(CC) -c -o $@ $(CFLAGS) $<
+	%.o: %.cpp $(INCS) Makefile
+		$(CXX) -c -o $@ $(CXXFLAGS) $<
 
-# Install command for Jetson Xavier
-./install-opendatacam.sh --platform xavier
+
+	$(APP): $(OBJS) Makefile
+		$(CXX) -o $(APP) $(OBJS) $(LIBS)
+
+	clean:
+		rm -rf $(OBJS) $(APP)
+	
+Replace in the same file "APP:= deepstream-app" with "APP:= deepstream-app2"
+
+●	Build Deepstream app
+
+	follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/apps/sample_apps/deepstream-app/
+
+
+●	Run deepstream to generate tensorRT engine 
+
+	cd /opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/
+	../apps/sample_apps/deepstream-app/deepstream-app2 -c /opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/deepstream_app_config_yoloV3_tiny_http_rtsp.txt
+
+*Expected output (press Q after the build is completed to stop deepstream-app):*
+
+	 *** DeepStream: Launched RTSP Streaming at rtsp://localhost:8020/ds-test ***
+
+	Opening in BLOCKING MODE
+	0:00:01.038002010  8142   0x557c4e2430 WARN                 nvinfer gstnvinfer.cpp:515:gst_nvinfer_logger:<primary_gie_classifier> NvDsInferContext[UID 1]:useEngineFile(): Failed to read from model engine file
+	0:00:01.038094308  8142   0x557c4e2430 INFO                 nvinfer gstnvinfer.cpp:519:gst_nvinfer_logger:<primary_gie_classifier> NvDsInferContext[UID 1]:initialize(): Trying to create engine from model files
+	Loading pre-trained weights...
+	Loading complete!
+	Total Number of weights read : 8858734
+		layer               inp_size            out_size       weightPtr
+	(1)   conv-bn-leaky     3 x 416 x 416      16 x 416 x 416    496
+	(2)   maxpool          16 x 416 x 416      16 x 208 x 208    496
+	(3)   conv-bn-leaky    16 x 208 x 208      32 x 208 x 208    5232
+	(4)   maxpool          32 x 208 x 208      32 x 104 x 104    5232
+	(5)   conv-bn-leaky    32 x 104 x 104      64 x 104 x 104    23920
+	(6)   maxpool          64 x 104 x 104      64 x  52 x  52    23920
+	(7)   conv-bn-leaky    64 x  52 x  52     128 x  52 x  52    98160
+	(8)   maxpool         128 x  52 x  52     128 x  26 x  26    98160
+	(9)   conv-bn-leaky   128 x  26 x  26     256 x  26 x  26    394096
+	(10)  maxpool         256 x  26 x  26     256 x  13 x  13    394096
+	(11)  conv-bn-leaky   256 x  13 x  13     512 x  13 x  13    1575792
+	(12)  maxpool         512 x  13 x  13     512 x  13 x  13    1575792
+	(13)  conv-bn-leaky   512 x  13 x  13    1024 x  13 x  13    6298480
+	(14)  conv-bn-leaky  1024 x  13 x  13     256 x  13 x  13    6561648
+	(15)  conv-bn-leaky   256 x  13 x  13     512 x  13 x  13    7743344
+	(16)  conv-linear     512 x  13 x  13     255 x  13 x  13    7874159
+	(17)  yolo            255 x  13 x  13     255 x  13 x  13    7874159
+	(18)  route                  -            256 x  13 x  13    7874159
+	(19)  conv-bn-leaky   256 x  13 x  13     128 x  13 x  13    7907439
+	(20)  upsample        128 x  13 x  13     128 x  26 x  26        -
+	(21)  route                  -            384 x  26 x  26    7907439
+	(22)  conv-bn-leaky   384 x  26 x  26     256 x  26 x  26    8793199
+	(23)  conv-linear     256 x  26 x  26     255 x  26 x  26    8858734
+	(24)  yolo            255 x  26 x  26     255 x  26 x  26    8858734
+	Output blob names :
+	yolo_17
+	yolo_24
+	Total number of layers: 50
+	Total number of layers on DLA: 0
+	Building the TensorRT Engine...
+	Building complete!
+	0:00:57.905894974  8142   0x557c4e2430 INFO                 nvinfer gstnvinfer.cpp:519:gst_nvinfer_logger:<primary_gie_classifier> NvDsInferContext[UID 1]:generateTRTModel(): Storing the serialized cuda engine to file at /opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/model_b1_fp32.engine
+	Deserialize yoloLayerV3 plugin: yolo_17
+	Deserialize yoloLayerV3 plugin: yolo_24
+
+	Runtime commands:
+			h: Print this help
+			q: Quit
+
+			p: Pause
+			r: Resume
+
+	NOTE: To expand a source in the 2D tiled display and view object details, left-click on the source.
+		To go back to the tiled display, right-click anywhere on the window.
+
+
+	**PERF: FPS 0 (Avg)
+	**PERF: 0.00 (0.00)
+	** INFO: <bus_callback:193>: Pipeline ready
+
+	NvMMLiteOpen : Block : BlockType = 4
+	** INFO: <bus_callback:179>: Pipeline running
+
+	===== NVMEDIA: NVENC =====
+	NvMMLiteBlockCreate : Block : BlockType = 4
+	GST_ARGUS: Creating output stream
+	CONSUMER: Waiting until producer is connected...
+	GST_ARGUS: Available Sensor modes :
+	GST_ARGUS: 2592 x 1944 FR = 15.000015 fps Duration = 66666600 ; Analog Gain range min 16.000000, max 128.000000; Exposure Range min 65000, max 60000000;
+
+	GST_ARGUS: 1920 x 1080 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 16.000000, max 128.000000; Exposure Range min 60000, max 30000000;
+
+	GST_ARGUS: 1280 x 960 FR = 45.000000 fps Duration = 22222222 ; Analog Gain range min 16.000000, max 128.000000; Exposure Range min 43000, max 20000000;
+
+	GST_ARGUS: 1280 x 720 FR = 59.999999 fps Duration = 16666667 ; Analog Gain range min 16.000000, max 128.000000; Exposure Range min 43000, max 10000000;
+
+	GST_ARGUS: Running with following settings:
+	Camera index = 0
+	Camera mode  = 3
+	Output Stream W = 1280 H = 720
+	seconds to Run    = 0
+	Frame Rate = 59.999999
+	GST_ARGUS: PowerService: requested_clock_Hz=627200000
+	GST_ARGUS: Setup Complete, Starting captures for 0 seconds
+	GST_ARGUS: Starting repeat capture requests.
+	CONSUMER: Producer has connected; continuing.
+	H264: Profile = 66, Level = 0
+	**PERF: 25.81 (25.81)
+	**PERF: 25.75 (25.78)
+	**PERF: 25.76 (25.77)
+	**PERF: 25.72 (25.76)
+	q
+	Quitting
+	GST_ARGUS: Cleaning up
+	CONSUMER: Done Success
+	GST_ARGUS: Done Success
+	App run successful
+	GST_ARGUS:
+	PowerServiceHwVic::cleanupResources
+
+
+●	Follow [Opendatacam without docker](https://github.com/opendatacam/opendatacam/blob/master/documentation/USE_WITHOUT_DOCKER.md) to install Opendatacam and DON'T install darknet 
 
-# Install command for a Nvidia-docker machine (ARCH_BIN=6.1)
-# NB: Will run from demo file, you can change this after install, see "5. Customize OpenDataCam"
-./install-opendatacam.sh --platform nvidiadocker_cuda_archbin_6_1
-```
-
-This command will download and start a docker container on the machine. After it finishes the docker container starts a webserver on port 8080 (ports 8070 and 8090 are also used).
-
-The docker container is started in auto-restart mode, so if you reboot your machine it will automaticaly start opendatacam on startup. ([Learn more about the specificities of docker on jetson](#6-docker-playbook-))
-
-You can also [use opendatacam without docker](#how-to-run-opendatacam-without-docker)
-
-### 2. bis (optional) Upgrade OpenDataCam (from v2.x to another v2.x version)
-
-- If you have modified the `config.json`, save it somewhere
-- Remove `config.json`, `install-opendatacam.sh`, `run-docker.sh`, `run-opendatacam.sh` _(To improve, make install script remove them)_
-- Run the install steps again (previous section), this will download a new default `config.json` file compatible with the opendatacam version you are installing and setup a new docker container
-- Open the newly downloaded config.json script and modify with the things you had changed previously
-
-_NB: we do not handle auto update of the config.json file_
-
-### 3. Use OpenDataCam 🖖
-
-Open your browser at http://IPOFJETSON:8080 .
-
-*If you are running with the jetson connected to a screen: http://localhost:8080*
-
-_NB: OpenDataCam only supports one client at a time, if you open the UI on two different devices, the stream will stop in one of them._
-
-See [Docker playbook ️📚](#6-docker-playbook-️) how to restart / stop OpenDataCam.
-
-### 4. Configure your Wifi hotspot 📲
-
-In order to operate opendatacam from your phone / tablet / computer.
-
-See [Make jetson device / machine accessible via WIFI](documentation/WIFI_HOTSPOT_SETUP.md)
-
-### 5. Customize OpenDataCam ️️⚙️
-
-We offer several customization options:
-
-- **Video input:** run from a file, change webcam resolution, change camera type (raspberry cam, usb cam...)
-
-- **Neural network:** change YOLO weights files depending on your hardware capacity, desired FPS (tinyYOLO, full yolov3, yolov3-openimages ...)
-
-- **Change display classes:** We default to mobility classes (car, bus, person...), but you can change this
-
-[Learn how to customize OpenDataCam](documentation/CONFIG.md)
-
-### 6. Docker playbook ️📚
-
-**Docker specificities on jetson**
-
-Docker doesn't support GPU usage on Jetson _(see [issue #214 on docker-nvidia official repo](https://github.com/NVIDIA/nvidia-docker/issues/214) , support should be landing around Q3-Q4 2019)_
-
-Meanwhile we need to give to the docker container access to the host platform GPU. We do so by mounting several volumes with [this script](https://github.com/opendatacam/opendatacam/blob/master/docker/run-jetson/run-docker.sh).
-
-That is why you need to use our install script to install a container. We have [an open issue](https://github.com/opendatacam/opendatacam/issues/89) to simplify setup once nvidia-docker support lands for jetson devices.
-
-**How to show OpenDataCam logs**
-
-```bash
-# List containers
-sudo docker logs -f -t opendatacam
-```
-
-**How to  stop / restart OpenDataCam**
-
-```bash
-# Stop container
-sudo docker stop opendatacam
-
-# Start container (will mount the opendatacam_videos/ and the config.json + mount CUDA necessary stuff)
-sudo ./run-opendatacam.sh
-
-# Restart container (after modifying the config.json file for example)
-sudo docker restart opendatacam
-
-# Install a newer version of opendatacam
-# Follow the 1. Install and start OpenDataCam
-
-# See stats ( CPU , memory usage ...)
-sudo docker stats opendatacam
-
-# Clear all docker container, images ...
-sudo docker system prune -a
-```
-
-## 🔌 API Documentation
-
-In order to solve use cases that aren't taken care by our opendatacam base app, you might be able to build on top of our API instead of forking the project.
-
-[https://opendatacam.github.io/opendatacam/apidoc/](https://opendatacam.github.io/opendatacam/apidoc/)
-
-## 🗃 Data export documentation
-
-- [Counter data](https://opendatacam.github.io/opendatacam/apidoc/#api-Recording-Counter_data)
-- [Tracker data](https://opendatacam.github.io/opendatacam/apidoc/#api-Recording-Tracker_data)
-
-## ⁉️ Troubleshooting
-
-[Common errors with answers](documentation/TROUBLESHOOTING.md)
-
-## 🎛 Advanced uses
-
-### How to use opendatacam without docker
-
-Read [How to use opendatacam without docker](documentation/USE_WITHOUT_DOCKER.md)
-
-### How to create / update the docker image
-
-We host our docker images on [Dockerhub](https://cloud.docker.com/repository/docker/opendatacam/opendatacam)
-
-*For jetson devices:*
-
-See [How to create / update a docker image for a jetson device](documentation/jetson/CREATE_DOCKER_IMAGE.md)
-
-*For nvidia-docker machine:*
-
-See [How to create / update a docker image for a nvidia-docker machine](documentation/nvidia-docker/CREATE_NVIDIADOCKER_IMAGE.md)
-
-
-## 🎯 How accurate is OpenDataCam ?
-
-We are working on [adding a benchmark](https://github.com/opendatacam/opendatacam/issues/87) to rank OpenDataCam on the [MOT Challenge (Multiple Object Tracking Benchmark)](https://motchallenge.net/) for v2.1.
-
-Accuracy depends on which YOLO weights your hardware is capable of running.
-
-## 🚤 How fast is OpenDataCam ?
-
-FPS depends on:
-
-- which hardware your are running OpenDataCam on
-- which YOLO weights you are using
-
-We made the default settings to run at least at 10 FPS on any Jetson.
-
-Learn more in the [Customize OpenDataCam documentation](documentation/CONFIG.md#Change-neural-network-weights)
-
-
-## 🛠 Development notes
-
-See [Development notes](documentation/DEVELOPMENT_NOTES.md)
-
-Technical architecture overview:
-
-![Technical architecture](https://user-images.githubusercontent.com/533590/60489282-3f2d1700-9ca4-11e9-932c-19bf84e04f9a.png)
-
-## 💌 Acknowledgments
-
-- Original darknet + YOLOv3 @pjreddie  : [https://pjreddie.com/darknet/](https://pjreddie.com/darknet/)
-- Darknet fork by @alexeyab : [https://github.com/alexeyab/darknet](https://github.com/alexeyab/darknet)
-- IOU / V-IOU Tracker by @bochinski : [https://github.com/bochinski/iou-tracker/](https://github.com/bochinski/iou-tracker/)
-- Next.js by @zeit : [https://github.com/zeit/next.js](https://github.com/zeit/next.js)
