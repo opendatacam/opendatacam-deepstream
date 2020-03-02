@@ -7,6 +7,8 @@
 ●	Patch ffserver
 
     sudo cp -r <PATH_TO_OPENDATACAM>/deepstream_patch/ffserver.conf /etc/ffserver.conf
+    
+●	Download Deepstream from this [link](https://developer.nvidia.com/deepstream-download) and make sure to get debian file for jetson
 
 ●	Install deepstream
 
@@ -30,6 +32,7 @@
 ●	Patch DeepStream : add confidence value to Deepstream inference objects (for more details refer to [link](https://devtalk.nvidia.com/default/topic/1058661/deepstream-sdk/nvinfer-is-not-populating-confidence-field-in-nvdsobjectmeta-ds-4-0-/post/5373361/#5373361) )
 
 Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/includes/nvdsinfer_context.h
+
 *Replace "NvDsInferObject" structure with the following :*
 
 	typedef struct
@@ -51,6 +54,7 @@ Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/includes/nvdsinfer_cont
 	} NvDsInferObject;
 
 Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/nvdsinfer_context_impl_output_parsing.cpp
+
 *Replace "clusterAndFillDetectionOutputCV" method with the following:*
 
 	void
@@ -78,15 +82,20 @@ Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/nvdsinfe
 			
 	}
 
-Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/ to generate the new libraries (make && sudo CUDA_VER=10.0 make install)
+Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/libs/nvdsinfer/ to generate the new libraries: 
+	
+	make && sudo CUDA_VER=10.0 make install
 
 Open file: /opt/nvidia/deepstream/deepstream-4.0/sources/gst-plugins/gst-nvinfer/gstnvinfer_meta_utils.cpp
+
 *Replace Line 83 ("obj_meta->confidence = 0.0;")  with :*
 
 	obj_meta->confidence = obj.confidence;
 
 	
-Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/gst-plugins/gst-nvinfer/ to generate the new libraries (make && sudo CUDA_VER=10.0 make install)
+Follow README file in /opt/nvidia/deepstream/deepstream-4.0/sources/gst-plugins/gst-nvinfer/ to generate the new libraries : 
+
+	make && sudo CUDA_VER=10.0 make install
 
 ●	Patch DeepStream : copy detection module 
 
