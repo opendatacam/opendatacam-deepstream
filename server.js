@@ -50,8 +50,18 @@ DBManager.init().then(
   }
 )
 
+
+
 // TODO Move the stdout code into it's own module
 var videoResolution = null;
+
+// define ffserver pameters from ffserver.conf file 
+const mjpegFeed = 'monitoring1';
+videoResolution = {
+  w: 640,
+  h: 480
+}
+Opendatacam.setVideoResolution(videoResolution)
 
 if(SIMULATION_MODE) {
   videoResolution = {
@@ -66,18 +76,6 @@ var stdoutInterval = "";
 var bufferLimit = 30000;
 var unhook_intercept = intercept(function(text) {
   var stdoutText = text.toString();
-  // Hacky way to get the video resolution from YOLO
-  // We parse the stdout looking for "Video stream: 640 x 480"
-  // alternative would be to add this info to the JSON stream sent by YOLO, would need to send a PR to https://github.com/alexeyab/darknet
-  if(stdoutText.indexOf('Video stream:') > -1) {
-    var splitOnStream = stdoutText.toString().split("stream:")
-    var ratio = splitOnStream[1].split("\n")[0];
-    videoResolution = {
-      w : parseInt(ratio.split("x")[0].trim()),
-      h : parseInt(ratio.split("x")[1].trim())
-    }
-    Opendatacam.setVideoResolution(videoResolution);
-  }
   stdoutBuffer += stdoutText;
   stdoutInterval += stdoutText;
 
@@ -143,7 +141,7 @@ app.prepare()
   express.get('/webcam/stream', (req, res) => {
     const urlData = getURLData(req);
     // Proxy MJPEG stream from darknet to avoid freezing issues
-    return new MjpegProxy(`http://${urlData.address}:8090`).proxyRequest(req, res);
+    return new MjpegProxy(`http://${urlData.address}:8090/${mjpegFeed}.mjpg`).proxyRequest(req, res);
   });
 
   /**
