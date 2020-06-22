@@ -14,3 +14,6 @@ Until version 5.0 is out we have to manually patch the SDK; see [this readme](ht
 In order to connect the output of Deepstream (in RTSP) to MJPEG proxy of OpenDataCam we added 2 components : 
 - FFMPEG
 - FFServer
+
+## Credits
+PoC developed by [Anas BAHOU](https://github.com/anasBahou) at [AtosInnovationBordeaux](https://github.com/AtosInnovationBordeaux) ==> [Pull request link](https://github.com/opendatacam/opendatacam-deepstream/pull/2)
