@@ -54,7 +54,7 @@ module.exports = {
         silent: true
       });
 
-      ffmpeg.process = new (forever.Monitor)(['ffmpeg', '-i', rtspURL, ffmpegURL], {
+      ffmpeg.process = new (forever.Monitor)(['ffmpeg', '-rtsp_transport', 'tcp', '-i', rtspURL, ffmpegURL], {
         max: Number.POSITIVE_INFINITY,
         cwd: config.PATH_TO_YOLO,
         killTree: true,

@@ -1,7 +1,7 @@
 {
   "OPENDATACAM_VERSION": "2.1.0",
-  "PATH_TO_YOLO" : "/opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/",
-  "DEEPSTREAM_CONFIG_FILE": "/opt/nvidia/deepstream/deepstream-4.0/sources/objectDetector_Yolo/deepstream_app_config_yoloV3_tiny_http_rtsp.txt",
+  "PATH_TO_YOLO" : "/opt/nvidia/deepstream/deepstream-5.0/sources/objectDetector_Yolo/",
+  "DEEPSTREAM_CONFIG_FILE": "/opt/nvidia/deepstream/deepstream-5.0/sources/objectDetector_Yolo/deepstream_app_config_yoloV3_tracker_rtsp.txt",
   "VALID_CLASSES": ["*"],
   "DISPLAY_CLASSES": [
     { "class": "bicycle", "icon": "1F6B2.svg"},
