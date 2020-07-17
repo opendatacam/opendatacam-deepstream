@@ -8,10 +8,10 @@ Current version of Deepstream SDK (4.0.x) still [has confidence problem](https:/
 
 ## Proposed solution
 Note: This problem will be solved in Deepstream 5.0.
-Until version 5.0 is out we have to manually patch the SDK; see [this readme](https://github.com/AtosInnovationBordeaux/opendatacam-deepstream/tree/master/deepstream_patch)
+Until version 5.0 is out we have to manually patch the SDK; see [this readme](https://github.com/opendatacam/opendatacam-deepstream/tree/tracker_ds5/deepstream_patch)
 
 # Other Tools in the Architecture
-In order to connect the output of Deepstream (in RTSP) to MJPEG proxy of OpenDataCam we added 2 components : 
+In order to connect the output of Deepstream (in RTSP) to MJPEG proxy of OpenDataCam we added 2 components :
 - FFMPEG
 - FFServer
 

@@ -84,7 +84,7 @@ for issues [link here](https://docs.nvidia.com/metropolis/deepstream/dev-guide/i
 		}
 	}
 
-*Change line 538 of file = \opt\nvidia\deepstream\deepstream-5.0\sources\apps\apps-common\src\deepstream_sink_bin.c    from :*
+*Change line 598 of file = \opt\nvidia\deepstream\deepstream-5.0\sources\apps\apps-common\src\deepstream_sink_bin.c    from :*
 	
 	g_object_set (G_OBJECT (bin->sink), "host", "224.224.255.255", "port",
 		config->udp_port, "async", FALSE, "sync", 0, NULL);
