@@ -198,4 +198,6 @@ Replace in the same file "APP:= deepstream-app" with "APP:= deepstream-app2"
 
 You can also change the model input size to get ~14 fps.
 
+●	After this you should be able to find an optimised tensorrt engine called `model_b1_gpu0_fp16.engine` in `/opt/nvidia/deepstream/deepstream-5.0/sources/objectDetector_Yolo/`. Notice that in the configfile `deepstream_app_config_yoloV3_tiny_http_rtsp.txt` we point to `model_b1_gpu0_fp16_608.engine` as the engine file, so either rename the file or change the configfile to reflect the different engine file.
+
 ●	Follow [Opendatacam without docker](https://github.com/opendatacam/opendatacam/blob/master/documentation/USE_WITHOUT_DOCKER.md) to install Opendatacam and DON'T install darknet
