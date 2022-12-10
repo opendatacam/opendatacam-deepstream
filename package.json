@@ -14,7 +14,7 @@
     "buffertools": "^2.1.6",
     "csv-express": "^1.2.2",
     "dayjs": "^1.8.14",
-    "express": "^4.17.0",
+    "express": "^4.17.3",
     "forever-monitor": "^1.7.1",
     "immutable": "^4.0.0-rc.12",
     "intercept-stdout": "^0.1.2",
