@@ -1,3 +1,8 @@
+# ⚠️ Developement on the Deepstream fork has stopped ⚠️
+
+This fork OpenDataCam with DeepStream will no longer be supported. Instead [OpenDataCam](https://github.com/opendatacam/opendatacam) itself shall be improved to add support for different neural networks (Darknet, DeepStream, PyTorch, TensorFlow etc.). This repository was therefore archived and put into "read only" mode.
+
+----
 
 # Goal
 The goal of this pull request is to replace Darknet with Deepstream SDK in order to [avoid darknet memory leak](https://github.com/opendatacam/opendatacam/issues/112).
